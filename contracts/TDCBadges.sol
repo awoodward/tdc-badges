@@ -188,7 +188,9 @@ contract TDCBadges is
         override(ERC721A, AccessControlEnumerable)
         returns (bool)
     {
-        return super.supportsInterface(interfaceID);
+        //return super.supportsInterface(interfaceID);
+        // Updated for ERC721A V4.x
+        return ERC721A.supportsInterface(interfaceID);
     }
 
     // https://docs.opensea.io/docs/contract-level-metadata

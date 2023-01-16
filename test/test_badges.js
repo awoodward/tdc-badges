@@ -23,6 +23,8 @@ describe("TDC Badge", () => {
 
     it("Should initialize the Badge contract", async () => {
         expect(await badgeContract.totalSupply()).to.equal(0);
+        // Check ERC721 Interface
+        expect(await badgeContract.supportsInterface(0x80ac58cd)).to.equal(true);
     });
 
     it("Should give away badges", async () => {

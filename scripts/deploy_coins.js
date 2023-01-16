@@ -5,8 +5,8 @@ async function main() {
   
     console.log("Account balance:", (await deployer.getBalance()).toString());
   
-    const TDCPoints = await ethers.getContractFactory("TDCPoints");
-    const token = await TDCPoints.deploy();
+    const TDCCoins = await ethers.getContractFactory("TDCCoins");
+    const token = await TDCCoins.deploy();
   
     console.log("Token address:", token.address);
   }

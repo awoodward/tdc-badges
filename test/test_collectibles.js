@@ -24,6 +24,8 @@ describe("TDC Collectibles", () => {
 
     it("Should initialize the Collectibles contract", async () => {
         expect(await collectiblesContract.totalSupply()).to.equal(0);
+        // Check ERC721 Interface
+        expect(await collectiblesContract.supportsInterface(0x80ac58cd)).to.equal(true);
     });
 
     it("Should give away collectibles", async () => {
