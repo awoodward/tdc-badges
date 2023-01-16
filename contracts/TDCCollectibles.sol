@@ -7,10 +7,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 // Source: https://docs.opengsn.org/contracts/#install-opengsn-contracts
-import "@opengsn/contracts/src/BaseRelayRecipient.sol";
+//import "@opengsn/contracts/src/BaseRelayRecipient.sol";
+import "./ERC2771Context.sol";
 
 contract TDCCollectibles is
-    BaseRelayRecipient,
+    ERC2771Context,
     ERC721A,
     Ownable,
     AccessControlEnumerable
@@ -30,7 +31,7 @@ contract TDCCollectibles is
     }
 
     // GSN
-    string public override versionRecipient = "2.2.0";
+    //string public override versionRecipient = "2.2.0";
 
     function setTrustedForwarder(address addr) public onlyOwner {
         _setTrustedForwarder(addr);
@@ -39,19 +40,19 @@ contract TDCCollectibles is
     function _msgSender()
         internal
         view
-        override(Context, BaseRelayRecipient)
+        override(Context, ERC2771Context)
         returns (address sender)
     {
-        sender = BaseRelayRecipient._msgSender();
+        sender = ERC2771Context._msgSender();
     }
 
     function _msgData()
         internal
         view
-        override(Context, BaseRelayRecipient)
+        override(Context, ERC2771Context)
         returns (bytes memory)
     {
-        return BaseRelayRecipient._msgData();
+        return ERC2771Context._msgData();
     }
 
     modifier onlyAdmin() {

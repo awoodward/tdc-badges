@@ -6,9 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 // Source: https://docs.opengsn.org/contracts/#install-opengsn-contracts
-import "@opengsn/contracts/src/BaseRelayRecipient.sol";
+//import "@opengsn/contracts/src/BaseRelayRecipient.sol";
+import "./ERC2771Context.sol";
 
-contract TDCCoins is BaseRelayRecipient, ERC20, Ownable, AccessControl {
+contract TDCCoins is ERC2771Context, ERC20, Ownable, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     constructor() ERC20("TDC Conduit Coins", "TDCCoins") {
@@ -17,7 +18,7 @@ contract TDCCoins is BaseRelayRecipient, ERC20, Ownable, AccessControl {
     }
 
     // GSN
-    string public override versionRecipient = "2.2.0";
+    //string public override versionRecipient = "2.2.0";
 
     function setTrustedForwarder(address addr) public onlyOwner {
         _setTrustedForwarder(addr);
@@ -26,19 +27,19 @@ contract TDCCoins is BaseRelayRecipient, ERC20, Ownable, AccessControl {
     function _msgSender()
         internal
         view
-        override(Context, BaseRelayRecipient)
+        override(Context, ERC2771Context)
         returns (address sender)
     {
-        sender = BaseRelayRecipient._msgSender();
+        sender = ERC2771Context._msgSender();
     }
 
     function _msgData()
         internal
         view
-        override(Context, BaseRelayRecipient)
+        override(Context, ERC2771Context)
         returns (bytes memory)
     {
-        return BaseRelayRecipient._msgData();
+        return ERC2771Context._msgData();
     }
 
     modifier onlyAdmin() {
