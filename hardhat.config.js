@@ -38,10 +38,6 @@ module.exports = {
     },
   },
   networks: {
-    rinkeby: {
-      url: `${process.env.ALCHEMY_RINKEBY_URL}`,
-      accounts: [`0x${process.env.RINKEBY_PRIVATE_KEY}`]
-    },
     mainnet: {
       url: `${process.env.ALCHEMY_MAINNET_URL}`,
       accounts: [`0x${process.env.MAINNET_PRIVATE_KEY}`]
@@ -58,6 +54,10 @@ module.exports = {
       url: `${process.env.ALCHEMY_ARBITRUM_URL}`,
       accounts: [`0x${process.env.MAINNET_PRIVATE_KEY}`]
     },
+    goerli: {
+      url: `${process.env.ALCHEMY_GOERLI_URL}`,
+      accounts: [`0x${process.env.GOERLI_PRIVATE_KEY}`]
+    },
   },
   etherscan: {
     // Your API key for Etherscan
@@ -65,7 +65,7 @@ module.exports = {
     apiKey: {
       arbitrumTestnet: `${process.env.ETHERSCAN_ARBITRUM_TEST}`,
       arbitrumOne: `${process.env.ETHERSCAN_ARBITRUM_ONE}`,
-      rinkeby:  `${process.env.ETHERSCAN_RINKEBY}`
+      goerli: `${process.env.ETHERSCAN_GOERLI}`
     } // Arbiscan
   }
 };
