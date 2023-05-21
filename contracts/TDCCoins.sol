@@ -1,45 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-// Source: https://github.com/chiru-labs/ERC721A
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-// Source: https://docs.opengsn.org/contracts/#install-opengsn-contracts
-//import "@opengsn/contracts/src/BaseRelayRecipient.sol";
-import "./ERC2771Context.sol";
 
-contract TDCCoins is ERC2771Context, ERC20, Ownable, AccessControl {
+contract TDCCoins is ERC20, Ownable, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     constructor() ERC20("TDC Conduit Coins", "TDCCoins") {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _grantRole(MINTER_ROLE, _msgSender());
-    }
-
-    // GSN
-    //string public override versionRecipient = "2.2.0";
-
-    function setTrustedForwarder(address addr) public onlyOwner {
-        _setTrustedForwarder(addr);
-    }
-
-    function _msgSender()
-        internal
-        view
-        override(Context, ERC2771Context)
-        returns (address sender)
-    {
-        sender = ERC2771Context._msgSender();
-    }
-
-    function _msgData()
-        internal
-        view
-        override(Context, ERC2771Context)
-        returns (bytes memory)
-    {
-        return ERC2771Context._msgData();
     }
 
     modifier onlyAdmin() {
@@ -60,5 +31,9 @@ contract TDCCoins is ERC2771Context, ERC20, Ownable, AccessControl {
 
     function mint(address to, uint256 amount) public onlyMinter {
         _mint(to, amount);
+    }
+
+    function renounceOwnership() public view override onlyOwner {
+        revert("Not allowed");
     }
 }

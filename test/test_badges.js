@@ -30,7 +30,6 @@ describe("TDC Badge", () => {
     it("Should give away badges", async () => {
         const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE"));
         let tokenId = await badgeContract.totalSupply();
-
         // Test Mint permissions
         await expect(badgeContract.safeMint(address1.address))
             .to.be.revertedWith("Only addresses with minter role can perform this action.");
@@ -38,7 +37,6 @@ describe("TDC Badge", () => {
         await badgeContract.grantRole(MINTER_ROLE, owner.address);
         await expect(badgeContract.mintBadges(address1.address, 0))
             .to.be.revertedWith("Incorrect number of badges.");
-
         // Mint to address 1
         expect(
             await badgeContract.safeMint(address1.address)
@@ -151,8 +149,12 @@ describe("TDC Badge", () => {
         // Redeem - fail
         await expect(badgeContract.connect(address2).redeemToken(address2.address, 0))
             .to.be.revertedWith("Only addresses with minter role can perform this action.");
-
+            
         await coinsContract.grantRole(MINTER_ROLE, badgeContract.address);
+
+        // Redeem - fail
+        await expect(badgeContract.connect(address2).redeemToken(address1.address, 0))
+            .to.be.revertedWith("Wallet is not owner of token");
 
         await expect(badgeContract.connect(address2).redeemToken(address2.address, 0))
         .to.emit(badgeContract, "Transfer")

@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-// Source: https://github.com/chiru-labs/ERC721A
-import "erc721a/contracts/ERC721A.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-// Source: https://docs.opengsn.org/contracts/#install-opengsn-contracts
-//import "@opengsn/contracts/src/BaseRelayRecipient.sol";
-import "./ERC2771Context.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
 interface ITDCCollectibles {
     function safeMint(address to) external;
@@ -19,10 +16,11 @@ interface ITDCCoins {
 }
 
 contract TDCBadges is
-    ERC2771Context, ERC721A,
+    ERC721,
     Ownable,
-    AccessControlEnumerable
-    {
+    AccessControlEnumerable,
+    ERC721Enumerable
+{
     using Strings for uint256;
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -42,34 +40,9 @@ contract TDCBadges is
 
     mapping(uint256 => bool) _tokenRedeemed;
 
-    constructor() ERC721A("TDC Badges", "TDCBadge") {
+    constructor() ERC721("TDC Badges", "TDCBadge") {
         // Initialize owner access control
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
-    }
-
-    // GSN
-   //string public override versionRecipient = "2.2.0";
-
-    function setTrustedForwarder(address addr) public onlyOwner {
-        _setTrustedForwarder(addr);
-    }
-
-    function _msgSender()
-        internal
-        view
-        override(Context, ERC2771Context)
-        returns (address sender)
-    {
-        sender = ERC2771Context._msgSender();
-    }
-
-    function _msgData()
-        internal
-        view
-        override(Context, ERC2771Context)
-        returns (bytes memory)
-    {
-        return ERC2771Context._msgData();
     }
 
     modifier onlyAdmin() {
@@ -126,16 +99,15 @@ contract TDCBadges is
     }
 
     function safeMint(address to) public onlyMinter {
+        uint256 supply = totalSupply();
+
         // mint 1 token
-        _safeMint(to, 1);
+        _safeMint(to, supply);
     }
 
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721A)
-        returns (string memory)
-    {
+    function tokenURI(
+        uint256 tokenId
+    ) public view override(ERC721) returns (string memory) {
         require(_exists(tokenId), "Badge token does not exist.");
         return
             bytes(_baseURIPrefix).length > 0
@@ -149,49 +121,44 @@ contract TDCBadges is
                 : "";
     }
 
- 
-    function mintBadges(address to, uint quantity) public onlyMinter 
-    {
+    function mintBadges(address to, uint quantity) public onlyMinter {
         require(quantity > 0, "Incorrect number of badges.");
+        uint256 supply = totalSupply();
 
-        _safeMint(to, quantity);
-
-    }
-
-    function walletOfOwner(address address_)
-        external
-        view
-        returns (uint256[] memory)
-    {
-        uint256 _balance = balanceOf(address_);
-        if (_balance == 0) {
-            return new uint256[](0);
-        } else {
-            uint256[] memory _tokens = new uint256[](_balance);
-            uint256 _index;
-
-            uint256 tokensCount = totalSupply();
-
-            for (uint256 i = 0; i < tokensCount; i++) {
-                if (address_ == ownerOf(i)) {
-                    _tokens[_index] = i;
-                    _index++;
-                }
-            }
-
-            return _tokens;
+        for (uint256 i = 1; i <= quantity; i++) {
+            _safeMint(to, supply + i);
         }
     }
 
-    function supportsInterface(bytes4 interfaceID)
+    function walletOfOwner(
+        address address_
+    ) public view returns (uint256[] memory) {
+        uint256 ownerTokenCount = balanceOf(address_);
+        uint256[] memory tokenIds = new uint256[](ownerTokenCount);
+        for (uint256 i; i < ownerTokenCount; i++) {
+            tokenIds[i] = tokenOfOwnerByIndex(address_, i);
+        }
+        return tokenIds;
+    }
+
+    function supportsInterface(
+        bytes4 interfaceID
+    )
         public
         view
-        override(ERC721A, AccessControlEnumerable)
+        override(ERC721, AccessControlEnumerable, ERC721Enumerable)
         returns (bool)
     {
-        //return super.supportsInterface(interfaceID);
-        // Updated for ERC721A V4.x
-        return ERC721A.supportsInterface(interfaceID);
+        return super.supportsInterface(interfaceID);
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 batchSize
+    ) internal virtual override(ERC721, ERC721Enumerable) {
+        super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
     // https://docs.opensea.io/docs/contract-level-metadata
@@ -210,7 +177,7 @@ contract TDCBadges is
         address from,
         address to,
         uint256 tokenId
-    ) public override(ERC721A) onceOnly(tokenId) {
+    ) public override(ERC721) onceOnly(tokenId) {
         require(
             collectiblesContractAddr != address(0x0),
             "Collectibles contract address not set."
@@ -218,16 +185,6 @@ contract TDCBadges is
         super.transferFrom(from, to, tokenId);
         // Send a collectible to the sender
         ITDCCollectibles(collectiblesContractAddr).safeMint(from);
-
-        _tokenTransferred[tokenId] = true;
-    }
-
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public override(ERC721A) onceOnly(tokenId) {
-        super.transferFrom(from, to, tokenId);
         _tokenTransferred[tokenId] = true;
     }
 
@@ -236,26 +193,37 @@ contract TDCBadges is
         address to,
         uint256 tokenId,
         bytes memory data
-    ) public override(ERC721A) onceOnly(tokenId) {
+    ) public override(ERC721) onceOnly(tokenId) {
+        require(
+            collectiblesContractAddr != address(0x0),
+            "Collectibles contract address not set."
+        );
         super.safeTransferFrom(from, to, tokenId, data);
+        // Send a collectible to the sender
+        ITDCCollectibles(collectiblesContractAddr).safeMint(from);
         _tokenTransferred[tokenId] = true;
     }
 
     // Tokens can only be redeemed once
     // Call Coins contract when redeeming
-    function redeemToken(address from, uint256 tokenId)
-        public
-        notRedeemed(tokenId)
-    {
+    function redeemToken(
+        address from,
+        uint256 tokenId
+    ) public notRedeemed(tokenId) {
         require(
             coinsContractAddr != address(0x0),
             "Coins contract address not set."
         );
+        require(from == ownerOf(tokenId), "Wallet is not owner of token");
         // burn the token
         _burn(tokenId);
         // Send coins to the redeemer
         ITDCCoins(coinsContractAddr).mint(from, coinsPerToken);
 
         _tokenRedeemed[tokenId] = true;
+    }
+
+    function renounceOwnership() public view override onlyOwner {
+        revert("Not allowed");
     }
 }
